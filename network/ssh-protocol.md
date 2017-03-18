@@ -286,52 +286,33 @@ mac
 MAC地址, 如果消息认证被打开，这个字段将包含MAC的数据,MAC地址初始化为"none"
 ```
 
-Note that the length of the concatenation of 'packet_length',
-'padding_length', 'payload', and 'random padding' MUST be a multiple
-of the cipher block size or 8, whichever is larger.  This constraint
-MUST be enforced, even when using stream ciphers.  Note that the
-'packet_length' field is also encrypted, and processing it requires
-special care when sending or receiving packets.  Also note that the
-insertion of variable amounts of 'random padding' may help thwart
-traffic analysis.
+请注意组合'packet_length', 'padding_length', 'payload' 和 
+'random padding' 组合长度必须是加密块或者8(取大的值，也就是最
+小填充到长度为8)的倍数.就算使用流加密，也需要强制执行. 请注意
+'packet_length'字段也会被加密,处理它的请求和返回的包的时候需要
+小心谨慎. 'random padding'的填充有助于防止中间人攻击.
 
 The minimum size of a packet is 16 (or the cipher block size,
 whichever is larger) bytes (plus 'mac').  Implementations SHOULD
 decrypt the length after receiving the first 8 (or cipher block size,
 whichever is larger) bytes of a packet.
 
-6.1.  Maximum Packet Length
+####6.1.  最大的包长度
 
-All implementations MUST be able to process packets with an
-uncompressed payload length of 32768 bytes or less and a total packet
-size of 35000 bytes or less (including 'packet_length',
-'padding_length', 'payload', 'random padding', and 'mac').  The
-maximum of 35000 bytes is an arbitrarily chosen value that is larger
-than the uncompressed length noted above.  Implementations SHOULD
-support longer packets, where they might be needed.  For example, if
-an implementation wants to send a very large number of certificates,
-the larger packets MAY be sent if the identification string indicates
-that the other party is able to process them.  However,
-implementations SHOULD check that the packet length is reasonable in
-order for the implementation to avoid denial of service and/or buffer
-overflow attacks.
+所有的实现必须能够处理未压缩情况下长度最大为32768bytes的包，或者
+一个最大35000 bytes的完整的包(包括'packet_length', 'padding_length', 
+'payload', 'random padding'和'mac')。最大35000bytes是一个任意的比
+上面提交的未压缩长度大的一个值. 需要的时候应该实现支持更大的包.
+例如当需要发送一组巨大的证书，如果协议表明能够处理它们则需要发送
+一个巨大的包.无论如何，应该检查包的长度是否合理，保证不要导致拒绝服务
+或者缓冲溢出.
 
-6.2.  Compression
+####6.2.  压缩
 
 If compression has been negotiated, the 'payload' field (and only it)
 will be compressed using the negotiated algorithm.  The
 'packet_length' field and 'mac' will be computed from the compressed
 payload.  Encryption will be done after compression.
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                     [Page 8]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 Compression MAY be stateful, depending on the method.  Compression
 MUST be independent for each direction, and implementations MUST
@@ -357,7 +338,7 @@ of the current block to the end of the packet payload.
 Additional methods may be defined as specified in [SSH-ARCH] and
 [SSH-NUMBERS].
 
-6.3.  Encryption
+####6.3.  加密
 
 An encryption algorithm and a key will be negotiated during the key
 exchange.  When encryption is in effect, the packet length, padding
@@ -376,17 +357,6 @@ independently selected, if multiple algorithms are allowed by local
 policy.  In practice however, it is RECOMMENDED that the same
 algorithm be used in both directions.
 
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                     [Page 9]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
 
 
 The following ciphers are currently defined:
@@ -435,16 +405,6 @@ strength, will become so prevalent and ubiquitous that the use of
 The "blowfish-cbc" cipher is Blowfish in CBC mode, with 128-bit keys
 [SCHNEIER].  This is a block cipher with 8-byte blocks.
 
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 10]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 The "twofish-cbc" or "twofish256-cbc" cipher is Twofish in CBC mode,
 with 256-bit keys as described [TWOFISH].  This is a block cipher
 with 16-byte blocks.
@@ -489,17 +449,6 @@ is chosen.
 
 Additional methods may be defined as specified in [SSH-ARCH] and in
 [SSH-NUMBERS].
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 11]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 6.4.  Data Integrity
 
@@ -548,13 +497,6 @@ none         OPTIONAL        no MAC; NOT RECOMMENDED
 
 The "hmac-*" algorithms are described in [RFC2104].  The "*-n" MACs
 use only the first n bits of the resulting value.
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 12]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
 
 
 SHA-1 is described in [FIPS-180-2] and MD5 is described in [RFC1321].
@@ -606,13 +548,6 @@ policy alternatives.
 o  Encoding of signatures and/or encrypted data.  This includes but
 is not limited to padding, byte order, and data formats.
 
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 13]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 The following public key and/or certificate formats are currently
 defined:
 
@@ -658,16 +593,6 @@ mpint     y
 
 Here, the 'p', 'q', 'g', and 'y' parameters form the signature key
 blob.
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 14]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 Signing and verifying using this key format is done according to the
 Digital Signature Standard [FIPS-186-2] using the SHA-1 hash
@@ -716,15 +641,6 @@ supported algorithms.  Each side has a preferred algorithm in each
 category, and it is assumed that most implementations, at any given
 time, will use the same preferred algorithm.  Each side MAY guess
 
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 15]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 which algorithm the other side is using, and MAY send an initial key
 exchange packet according to the algorithm, if appropriate for the
 preferred method.
@@ -760,26 +676,6 @@ authentication MAY be used with this protocol.  After a key exchange
 with implicit server authentication, the client MUST wait for a
 response to its service request message before sending any further
 data.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 16]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 7.1.  Algorithm Negotiation
 
@@ -828,14 +724,6 @@ conditions:
 there is an encryption-capable algorithm on the server's
 server_host_key_algorithms that is also supported by the
 client, and
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 17]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 +  if the algorithm requires a signature-capable host key,
 there is a signature-capable algorithm on the server's
@@ -886,13 +774,6 @@ MUST disconnect.
 Note that "none" must be explicitly listed if it is to be
 acceptable.  The MAC algorithm names are listed in Section 6.4.
 
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 18]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 compression_algorithms
 A name-list of acceptable compression algorithms in order of
 preference.  The chosen compression algorithm MUST be the first
@@ -942,13 +823,6 @@ SSH_MSG_KEXINIT messages MUST NOT be sent);
 
 o  Specific key exchange method messages (30 to 49).
 
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 19]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 The provisions of Section 11 apply to unrecognized messages.
 
 Note, however, that during a key re-exchange, after sending a
@@ -997,14 +871,6 @@ HASH generates) to the key.  This process is repeated until enough
 key material is available; the key is taken from the beginning of
 this value.  In other words:
 
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 20]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 K1 = HASH(K || H || X || session_id)   (X is e.g., "A")
 K2 = HASH(K || H || K1)
 K3 = HASH(K || H || K1 || K2)
@@ -1048,19 +914,6 @@ begins.
 1. C generates a random number x (1 < x < q) and computes
 e = g^x mod p.  C sends e to S.
 
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 21]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 2. S generates a random number y (0 < y < q) and computes
 f = g^y mod p.  S receives e.  It computes K = e^y mod p,
 H = hash(V_C || V_S || I_C || I_S || K_S || e || f || K)
@@ -1097,25 +950,6 @@ byte      SSH_MSG_KEXDH_REPLY
 string    server public host key and certificates (K_S)
 mpint     f
 string    signature of H
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 22]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 The hash H is computed as the HASH hash of the concatenation of the
 following:
@@ -1166,13 +1000,6 @@ already was a reply.  Either party MAY initiate the re-exchange, but
 roles MUST NOT be changed (i.e., the server remains the server, and
 the client remains the client).
 
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 23]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 Key re-exchange is performed using whatever encryption was in effect
 when the exchange was started.  Encryption, compression, and MAC
 methods are not changed before a new SSH_MSG_NEWKEYS is sent after
@@ -1218,17 +1045,6 @@ appropriate SSH_MSG_DISCONNECT message and MUST disconnect.
 When the service starts, it may have access to the session identifier
 generated during the key exchange.
 
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 24]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 If the server supports the service (and permits the client to use
 it), it MUST respond with the following:
 
@@ -1267,23 +1083,6 @@ explanation in a human-readable form.  The Disconnection Message
 the table below.  Note that the decimal representation is displayed
 in this table for readability, but the values are actually uint32
 values.
-
-
-
-
-
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 25]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 Symbolic name                                reason code
 -------------                                -----------
@@ -1331,15 +1130,6 @@ byte      SSH_MSG_DEBUG
 boolean   always_display
 string    message in ISO-10646 UTF-8 encoding [RFC3629]
 string    language tag [RFC3066]
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 26]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 All implementations MUST understand this message, but they are
 allowed to ignore it.  This message is used to transmit information
@@ -1390,13 +1180,6 @@ this document, are detailed in [SSH-NUMBERS].
 
 
 
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 27]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 14.  Security Considerations
 
 This protocol provides a secure encrypted channel over an insecure
@@ -1406,52 +1189,6 @@ session ID that may be used by higher-level protocols.
 
 Full security considerations for this protocol are provided in
 [SSH-ARCH].
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 28]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 15.  References
 
@@ -1501,14 +1238,6 @@ an IANA Considerations Section in RFCs", BCP 26, RFC
 Thayer, "OpenPGP Message Format", RFC 2440, November
 1998.
 
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 29]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 [RFC3066]      Alvestrand, H., "Tags for the Identification of
 Languages", BCP 47, RFC 3066, January 2001.
 
@@ -1557,14 +1286,6 @@ April 1984.
 [RFC1661]      Simpson, W., "The Point-to-Point Protocol (PPP)", STD
 51, RFC 1661, July 1994.
 
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 30]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 [RFC2412]      Orman, H., "The OAKLEY Key Determination Protocol",
 RFC 2412, November 1998.
 
@@ -1595,31 +1316,6 @@ Trademark Notice
 
 "ssh" is a registered trademark in the United States and/or other
 countries.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 31]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 Full Copyright Statement
 
@@ -1665,10 +1361,3 @@ Acknowledgement
 
 Funding for the RFC Editor function is provided by the IETF
 Administrative Support Activity (IASA).
-
-
-
-Ylonen &  Lonvick           Standards Track                    [Page 32]
-
-######参考链接
-[rfc4253](https://tools.ietf.org/html/rfc4253)
