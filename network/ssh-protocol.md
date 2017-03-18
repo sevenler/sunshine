@@ -1,192 +1,140 @@
-Network Working Group                                          T. Ylonen
-Request for Comments: 4253              SSH Communications Security Corp
-Category: Standards Track                                C. Lonvick, Ed.
-Cisco Systems, Inc.
-January 2006
+
+[原文链接](https://www.ietf.org/rfc/rfc4253.txt)
+
+网络工作组
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+T. Ylonen  
+请求提交: 4253
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+SSH 安全数据传输协议  
+分类: 标准协议  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+C. Lonvick, Ed.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+Cisco 系统, 股份有限公司  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+2006 1月  
 
 
-The Secure Shell (SSH) Transport Layer Protocol
+###安全传输层交换协议(SSH)
 
-Status of This Memo
+####备忘录状态  
+本文档定义了一个标准的用于网络传输的协议, 并给出了实现的讨论和建议。请参照"Internet Official Protocol Standards"(STD 1)最近的版本来确认本协议的状态。本备忘录将持续被修改分发.
 
-This document specifies an Internet standards track protocol for the
-Internet community, and requests discussion and suggestions for
-improvements.  Please refer to the current edition of the "Internet
-Official Protocol Standards" (STD 1) for the standardization state
-and status of this protocol.  Distribution of this memo is unlimited.
 
-Copyright Notice
-
+####版权  
 Copyright (C) The Internet Society (2006).
 
-Abstract
-
-The Secure Shell (SSH) is a protocol for secure remote login and
-other secure network services over an insecure network.
-
-This document describes the SSH transport layer protocol, which
-typically runs on top of TCP/IP.  The protocol can be used as a basis
-for a number of secure network services.  It provides strong
-encryption, server authentication, and integrity protection.  It may
-also provide compression.
-
-Key exchange method, public key algorithm, symmetric encryption
-algorithm, message authentication algorithm, and hash algorithm are
-all negotiated.
-
-This document also describes the Diffie-Hellman key exchange method
-and the minimal set of algorithms that are needed to implement the
-SSH transport layer protocol.
+####概要  
+SSH 用于在非安全网络中进行安全远程登录或进行其他安全网络服务的协议。  
+本文档用于描述运行在TCP/IP协议之上的SSH传输层协议，本协议可以作为安全网络服务的基础部分. 它提供加密，认证，防篡改，并同时提交压缩.  
+支持可协商的密钥交换方法、公钥算法、对称加密算法、消息认证算法、Hash算法  
+本文档同样描述了Diffie-Hellman Key 交换方法和实现SSH协议需要的最小算法集  
 
 
 
+文档内容
+```
+1. 简介 .....................................................3
+2. 贡献者....................................................3
+3. 文档约定..................................................3
+4. 链接设置..................................................4
+4.1. 使用TCP/IP协议 .........................................4
+4.2. 协议版本交换............................................4
+5. 旧SSH协议兼容.............................................5
+5.1. 老客户端，新协议........................................6
+5.2. 新客户端，老服务 .......................................6
+5.3. 包大小与容量限制........................................6
+6. 二进制包协议..............................................7
+6.1. 最大的包长度............................................8
+6.2. 压缩....................................................8
+6.3. 加密....................................................9
+6.4. 数据防篡改..............................................12
+6.5. Key交换方法.............................................13
+6.6. 公钥算法................................................13
+7. 密钥交换..................................................15
+7.1. 算法协商................................................17
+7.2. 密钥交换输出............................................20
+7.3. 密钥使用考虑............................................21
+8. Diffie-Hellman 秘钥交换...................................21
+8.1. diffie-hellman-group1-sha1 .............................23
+8.2. diffie-hellman-group14-sha1 ............................23
+9. 密钥重新交换..............................................23
+10. 请求服务.................................................24
+11. 额外交换.................................................25
+11.1. 取消链接的消息.........................................25
+11.2. 被丢弃的数据消息.......................................26
+11.3. 调试消息...............................................26
+11.4. 保留的消息.............................................27
+12. 消息数量概要.............................................27
+13. IANA 注意事项............................................27
+14. 安全注意事项.............................................28
+15. 引用参考.................................................29
+15.1. 参考标准...............................................29
+15.2. 参考文献...............................................30
+作者联系地址.................................................31
+商标公告.....................................................31
+```
+
+####1.  介绍
+
+SSH协议层是一个安全的，低级的传输协议.它提供加密，主机加密认证, 防篡改.  
+
+协议中是认证是用于认证主机， 这个协议不提供用户认证。
+在这个协议基础上可以设计高级协议来认证用户。  
+
+本协议被设计成简单，并很灵活地支持参数协商， 最小的请求返回(通常所说的链接握手)次数。
+协议支持协商密钥交换，公钥加密，对称加密算法，消息验证算法，Hash算法。
+它被设计成在多种情况下，交换所有的密钥只需要2次握手，服务的认证，
+服务的请求，服务请求确认，最坏情况只需要3次握手。
 
 
+####2.  协助者
 
+文档的主要协作者列表如下: Tatu Ylonen, Tero Kivinen, Timo J. Rinne, Sami Lehtinen
+(以及所有的SSH通信安全公司成员), 和Markku-Juhani O. Saarinen(Jyvaskyla大学)。
+Darren Moffat是本文档的原始编辑， 同时他也提交了很多充实的的内容。
 
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                     [Page 1]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
-Table of Contents
-
-1. Introduction ....................................................3
-2. Contributors ....................................................3
-3. Conventions Used in This Document ...............................3
-4. Connection Setup ................................................4
-4.1. Use over TCP/IP ............................................4
-4.2. Protocol Version Exchange ..................................4
-5. Compatibility With Old SSH Versions .............................5
-5.1. Old Client, New Server .....................................6
-5.2. New Client, Old Server .....................................6
-5.3. Packet Size and Overhead ...................................6
-6. Binary Packet Protocol ..........................................7
-6.1. Maximum Packet Length ......................................8
-6.2. Compression ................................................8
-6.3. Encryption .................................................9
-6.4. Data Integrity ............................................12
-6.5. Key Exchange Methods ......................................13
-6.6. Public Key Algorithms .....................................13
-7. Key Exchange ...................................................15
-7.1. Algorithm Negotiation .....................................17
-7.2. Output from Key Exchange ..................................20
-7.3. Taking Keys Into Use ......................................21
-8. Diffie-Hellman Key Exchange ....................................21
-8.1. diffie-hellman-group1-sha1 ................................23
-8.2. diffie-hellman-group14-sha1 ...............................23
-9. Key Re-Exchange ................................................23
-10. Service Request ...............................................24
-11. Additional Messages ...........................................25
-11.1. Disconnection Message ....................................25
-11.2. Ignored Data Message .....................................26
-11.3. Debug Message ............................................26
-11.4. Reserved Messages ........................................27
-12. Summary of Message Numbers ....................................27
-13. IANA Considerations ...........................................27
-14. Security Considerations .......................................28
-15. References ....................................................29
-15.1. Normative References .....................................29
-15.2. Informative References ...................................30
-Authors' Addresses ................................................31
-Trademark Notice ..................................................31
-
-
-
-
-
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                     [Page 2]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
-1.  Introduction
-
-The SSH transport layer is a secure, low level transport protocol.
-It provides strong encryption, cryptographic host authentication, and
-integrity protection.
-
-Authentication in this protocol level is host-based; this protocol
-does not perform user authentication.  A higher level protocol for
-user authentication can be designed on top of this protocol.
-
-The protocol has been designed to be simple and flexible to allow
-parameter negotiation, and to minimize the number of round-trips.
-The key exchange method, public key algorithm, symmetric encryption
-algorithm, message authentication algorithm, and hash algorithm are
-all negotiated.  It is expected that in most environments, only 2
-round-trips will be needed for full key exchange, server
-authentication, service request, and acceptance notification of
-service request.  The worst case is 3 round-trips.
-
-2.  Contributors
-
-The major original contributors of this set of documents have been:
-Tatu Ylonen, Tero Kivinen, Timo J. Rinne, Sami Lehtinen (all of SSH
-Communications Security Corp), and Markku-Juhani O. Saarinen
-(University of Jyvaskyla).  Darren Moffat was the original editor of
-this set of documents and also made very substantial contributions.
-
-Many people contributed to the development of this document over the
-years.  People who should be acknowledged include Mats Andersson, Ben
-Harris, Bill Sommerfeld, Brent McClure, Niels Moller, Damien Miller,
-Derek Fawcus, Frank Cusack, Heikki Nousiainen, Jakob Schlyter, Jeff
-Van Dyke, Jeffrey Altman, Jeffrey Hutzelman, Jon Bright, Joseph
+在这一年里许多人提交修改了本文档的开发版本，这些人应该被公布出来以表感谢，
+他们包括：Mats Andersson, Ben Harris, Bill Sommerfeld, Brent McClure, 
+Niels Moller, Damien Miller,Derek Fawcus, Frank Cusack, Heikki Nousiainen, 
+Jakob Schlyter, Jeff Van Dyke, Jeffrey Altman, Jeffrey Hutzelman, Jon Bright, Joseph
 Galbraith, Ken Hornstein, Markus Friedl, Martin Forssen, Nicolas
 Williams, Niels Provos, Perry Metzger, Peter Gutmann, Simon
 Josefsson, Simon Tatham, Wei Dai, Denis Bider, der Mouse, and
-Tadayoshi Kohno.  Listing their names here does not mean that they
-endorse this document, but that they have contributed to it.
+Tadayoshi Kohno.  在这儿听到他们的名字并不是表示他们对这个文档签名了，
+而是表示他们对本文档有贡献。  
 
-3.  Conventions Used in This Document
+####3.  文档约定
 
-All documents related to the SSH protocols shall use the keywords
-"MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD",
-"SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" to describe
-requirements.  These keywords are to be interpreted as described in
-[RFC2119].
+所有关于SSH的文档应该用下面这些关键: "MUST", “MUST NOT”, "REQUIRED", "SHALL",
+“SHOULD”, "SHOULD NOT", "RECOMMENDED", "MAY", 和 "OPTIONAL" 来描述要求.
+这些关键字在[RFC2119]里面理解成描述.
 
 
+关键字"PRIVATE USE", "HIERARCHICAL ALLOCATION", "FIRST COME FIRST SERVED", 
+"EXPERT REVIEW", "SPECIFICATION REQUIRED", "IESG APPROVAL", "IETF CONSENSUS", 和
+"STANDARDS ACTION" 这些出现文档的时候表示命名空间分配, 在[RFC2434]中描述过.
 
-
-
-
-Ylonen &  Lonvick           Standards Track                     [Page 3]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
-The keywords "PRIVATE USE", "HIERARCHICAL ALLOCATION", "FIRST COME
-FIRST SERVED", "EXPERT REVIEW", "SPECIFICATION REQUIRED", "IESG
-APPROVAL", "IETF CONSENSUS", and "STANDARDS ACTION" that appear in
-this document when used to describe namespace allocation are to be
-interpreted as described in [RFC2434].
-
-Protocol fields and possible values to fill them are defined in this
-set of documents.  Protocol fields will be defined in the message
-definitions.  As an example, SSH_MSG_CHANNEL_DATA is defined as
-follows.
-
+协议字段和可能的值将在这个文档中定义。在消息的定义里面会定义协议的字段.例如:
+SSH_MSG__CHANNEL_DATA 被定义如下.
+```
 byte      SSH_MSG_CHANNEL_DATA
 uint32    recipient channel
 string    data
+```
+贯穿整个文档, 当这些字段被引用时, 需要用单引号引起来. 当字段被赋值时，
+需要用双引号引起来。使用上面的例子, 'data'可能的值是"foo"和"bar".
 
-Throughout these documents, when the fields are referenced, they will
-appear within single quotes.  When values to fill those fields are
-referenced, they will appear within double quotes.  Using the above
-example, possible values for 'data' are "foo" and "bar".
 
-4.  Connection Setup
+####4.  连接设置
 
 SSH works over any 8-bit clean, binary-transparent transport.  The
 underlying transport SHOULD protect against transmission errors, as
@@ -194,72 +142,44 @@ such errors cause the SSH connection to terminate.
 
 The client initiates the connection.
 
-4.1.  Use over TCP/IP
+####4.1.  使用TCP/IP
 
-When used over TCP/IP, the server normally listens for connections on
-port 22.  This port number has been registered with the IANA, and has
-been officially assigned for SSH.
+当使用TCP/IP协议, 服务一般监听端口22来等待链接. 这个端口是IANA注册的，
+并正式分配给SSH使用(操作系统固定分配22端口给SSH服务)。
 
-4.2.  Protocol Version Exchange
+####4.2.  协议版本交换
 
-When the connection has been established, both sides MUST send an
-identification string.  This identification string MUST be
+当建立一个连接后，连接的双方都需要发送一个鉴定字符串,这个鉴定字符串
+必须像这样 
 
-SSH-protoversion-softwareversion SP comments CR LF
+> SSH-protoversion-sofewareversion SP comments CR LF
 
-Since the protocol being defined in this set of documents is version
-2.0, the 'protoversion' MUST be "2.0".  The 'comments' string is
-OPTIONAL.  If the 'comments' string is included, a 'space' character
-(denoted above as SP, ASCII 32) MUST separate the 'softwareversion'
-and 'comments' strings.  The identification MUST be terminated by a
-single Carriage Return (CR) and a single Line Feed (LF) character
-(ASCII 13 and 10, respectively).  Implementers who wish to maintain
+自本文档后的协议版本是2.0， 这个'protoversion' 必须是 '2.0'.  
+字段 'comments' 字符是一个选项. 如果包含了'comments'这个字段, 
+那么在'comments'和'sofewareversion'之间必须定义一个'space'字符
+(既SP字段, 格式ASCII 32) .  鉴定字符串必须以一个回车键(CR)和
+一个换行符(LF)(分为是ASCII 13和 ASCII 10)。实现者这么做是为了兼容老协议，
+本协议未写文档的版本也许想标识符不带回车，这个原因在本文档的5章节会写。
+不能发送null字符，标识符最大的长度是255字符,包括回车和换行。
 
+回车和换行符前面部分将被用于Diffie-Hellman密钥交换(第8章节会讲).
 
+服务器**也许**在发送版本字符串前发送其他数据, 每行**必须**使用回车符和换行符结尾.
+每一行**必须不**使用"SSH-", 并**应该**使用 ISO-10646 和 UTF-8编码[RFC3629](由于语言是不确定).
+客户端**必须**有能处理多行的能力.多行数据**可能**被忽略掉, **也许**
+被显示给客户端用户. 如果它们被显示了， **应该**使用例如[SSH-ARCH]算法来控制字符过滤。
+这个特性主要为了允许 TCP-wrappers 来在断开连接时可以显示错误信息。
 
-Ylonen &  Lonvick           Standards Track                     [Page 4]
+'protoversion'和'sofewareversion'字符串**必须**由US-ASCII字符组成，
+空白字符和减号(-)都会报错. 'sofewareversion'字符串主要用于触
+发兼容性扩展程序和标记实现的服务的性能。‘comments’字符串**应该**
+包含对用户决解问题有用的附加信息。 一个合法的标识符字符串像这样  
 
-RFC 4253              SSH Transport Layer Protocol          January 2006
+> SSH-2.0-billsSSH_3.6.3q3<CR><LF>
 
+这个标识符不包含可选标识'comments', 因此回车和换行在'softwareversion'的后面。    
 
-compatibility with older, undocumented versions of this protocol may
-want to process the identification string without expecting the
-presence of the carriage return character for reasons described in
-Section 5 of this document.  The null character MUST NOT be sent.
-The maximum length of the string is 255 characters, including the
-Carriage Return and Line Feed.
-
-The part of the identification string preceding the Carriage Return
-and Line Feed is used in the Diffie-Hellman key exchange (see Section
-8).
-
-The server MAY send other lines of data before sending the version
-string.  Each line SHOULD be terminated by a Carriage Return and Line
-Feed.  Such lines MUST NOT begin with "SSH-", and SHOULD be encoded
-in ISO-10646 UTF-8 [RFC3629] (language is not specified).  Clients
-MUST be able to process such lines.  Such lines MAY be silently
-ignored, or MAY be displayed to the client user.  If they are
-displayed, control character filtering, as discussed in [SSH-ARCH],
-SHOULD be used.  The primary use of this feature is to allow TCP-
-wrappers to display an error message before disconnecting.
-
-Both the 'protoversion' and 'softwareversion' strings MUST consist of
-printable US-ASCII characters, with the exception of whitespace
-characters and the minus sign (-).  The 'softwareversion' string is
-primarily used to trigger compatibility extensions and to indicate
-the capabilities of an implementation.  The 'comments' string SHOULD
-contain additional information that might be useful in solving user
-problems.  As such, an example of a valid identification string is
-
-SSH-2.0-billsSSH_3.6.3q3<CR><LF>
-
-This identification string does not contain the optional 'comments'
-string and is thus terminated by a CR and LF immediately after the
-'softwareversion' string.
-
-Key exchange will begin immediately after sending this identifier.
-All packets following the identification string SHALL use the binary
-packet protocol, which is described in Section 6.
+发送这个标识符后密钥交换马上开始。所有在标识符后面的包都**应该**使用二进制包协议，章节6会讲到。
 
 5.  Compatibility With Old SSH Versions
 
