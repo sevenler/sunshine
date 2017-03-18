@@ -1,3 +1,4 @@
+###UUID  
 英文原文：https://pymotw.com/3/uuid/
 
 用途： uuid模块实现了 RFC 4122 定义的全球唯一标示符
@@ -18,7 +19,7 @@ Using well-known strings combined with cryptographic hashing
 In all cases, the seed value is combined with the system clock and a clock sequence value used to maintain uniqueness in case the clock is set backwards. 
 
 
-####UUID 1 - IEEE 802 MAC Address
+####UUID 1 - IEEE 802 MAC Address  
 UUID 第一个版本使用域名的MAC地址计算而来的，uuid模块调用getnode()来获取MAC地址。
 
 UUID version 1 values are computed using the MAC address of the host. The uuid module uses getnode() to retrieve the MAC value of the current system.
