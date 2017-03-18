@@ -181,60 +181,47 @@ The client initiates the connection.
 
 发送这个标识符后密钥交换马上开始。所有在标识符后面的包都**应该**使用二进制包协议，章节6会讲到。
 
-5.  Compatibility With Old SSH Versions
+####5.  兼容老版本SSH
 
-As stated earlier, the 'protoversion' specified for this protocol is
-"2.0".  Earlier versions of this protocol have not been formally
-documented, but it is widely known that they use 'protoversion' of
-"1.x" (e.g., "1.5" or "1.3").  At the time of this writing, many
-implementations of SSH are utilizing protocol version 2.0, but it is
-known that there are still devices using the previous versions.
-During the transition period, it is important to be able to work in a
+上文中提到'protoversion'表明这个协议版本是“2.0”. 而更早的版本的协议
+没有写文档纪录下来, 但是'protoversion'的值为"1.x"(例如"1.5" 或 "1.3")
+是被广泛熟知的. 在写这个文档的时候, 许多SSH的实现已经在使用2.0版本,
+但是我们知道还有很多设备依然在使用2.0之前的版本.在这个转化周期中, 能
+兼容安装老版本的客户端或者服务端的执行将非常重要. 这个章节的内容主要
+关于1.x的SSH版本的兼容性实现. 关于这些1.x版本的文档还存在源代码[ssh-1.2.30]
+的README文件中。
 
+5.1.  老版本客户端, 新版本服务器
 
+服务器的实现**也许**支持配置兼容性标识来兼容老版本协议.当这个标识位打开
+时候,服务应该将任何版本的'protoversion'当作"1.99"版本.客户端使用2.0
+协议必须把这个版本当作"2.0"。在这个模式里面, 服务端不能在协议标识的
+尾部加回车键(ASCII 13).
 
-Ylonen &  Lonvick           Standards Track                     [Page 5]
+在兼容模式里面, 服务在发送协议标示后不能发送任何数据，直到收到客户
+端的协议标识.这时候，服务能判断出客户端是否使用老协议, 如果请求是老
+协议则使用老协议传输. 在兼容模式里面, 服务在发送协议标识前不能发送
+任何附加数据.
 
-RFC 4253              SSH Transport Layer Protocol          January 2006
+当不需要兼容老版本协议后, 服务也许能在发送标识符后马上发送初始密钥
+交换数据.
 
+5.2.  新版本客户端, 老版本服务器
 
-way that is compatible with the installed SSH clients and servers
-that use the older version of the protocol.  Information in this
-section is only relevant for implementations supporting compatibility
-with SSH versions 1.x.  For those interested, the only known
-documentation of the 1.x protocol is contained in README files that
-are shipped along with the source code [ssh-1.2.30].
+当新版本协议的客户端在发送版本请求后马上(没有收到服务器的版本信息)
+发送了其他数据。如果发现服务的版本是老版本的SSH。客户端需要关闭和
+服务的连接, 转而使用老版本协议重新连接.
 
-5.1.  Old Client, New Server
+5.3.  包大小和包容量
 
-Server implementations MAY support a configurable compatibility flag
-that enables compatibility with old versions.  When this flag is on,
-the server SHOULD identify its 'protoversion' as "1.99".  Clients
-using protocol 2.0 MUST be able to identify this as identical to
-"2.0".  In this mode, the server SHOULD NOT send the Carriage Return
-character (ASCII 13) after the identification string.
+不少读者很担心新的头部、 填充和MAC的增长将超出包的大小. 最小包的大小
+大约在28bytes(具体看协商的算法). 这里的增长对于大包是微不足道的, 对于
+单字节包(telnet类型会话)就很有影响. 无论如何，多种原因使这个增长对于
+大多数情况是没有问题的:
 
-In the compatibility mode, the server SHOULD NOT send any further
-data after sending its identification string until it has received an
-identification string from the client.  The server can then determine
-whether the client is using an old protocol, and can revert to the
-old protocol if required.  In the compatibility mode, the server MUST
-NOT send additional data before the identification string.
-
-When compatibility with old clients is not needed, the server MAY
-send its initial key exchange data immediately after the
-identification string.
-
-5.2.  New Client, Old Server
-
-Since the new client MAY immediately send additional data after its
-identification string (before receiving the server's identification
-string), the old protocol may already be corrupt when the client
-learns that the server is old.  When this happens, the client SHOULD
-close the connection to the server, and reconnect using the old
-protocol.
-
-5.3.  Packet Size and Overhead
+1.TCP/IP头部最小是32bytes。所以实际的增长在33-51bytes之间.
+2.以太网包最小的数据字段是46bytes。所以，增长不会超过5bytes.
+3.全网的telnet类型的数据是很少的, 算上增长的包尺寸也可以忽略不计.
 
 Some readers will worry about the increase in packet size due to new
 headers, padding, and the Message Authentication Code (MAC).  The
@@ -246,13 +233,6 @@ non-issue in almost all cases:
 
 o  The minimum size of a TCP/IP header is 32 bytes.  Thus, the
 increase is actually from 33 to 51 bytes (roughly).
-
-
-
-Ylonen &  Lonvick           Standards Track                     [Page 6]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
 
 o  The minimum size of the data field of an Ethernet packet is 46
 bytes [RFC0894].  Thus, the increase is no more than 5 bytes.
@@ -274,50 +254,37 @@ minimize delays in screen updates, one does not want excessively
 large packets for interactive sessions.  The maximum packet size is
 negotiated separately for each channel.
 
-6.  Binary Packet Protocol
+####6.  二进制包协议
 
-Each packet is in the following format:
-
+每个包都采用下面的格式:
+```
 uint32    packet_length
 byte      padding_length
 byte[n1]  payload; n1 = packet_length - padding_length - 1
 byte[n2]  random padding; n2 = padding_length
 byte[m]   mac (Message Authentication Code - MAC); m = mac_length
+```
 
 packet_length
-The length of the packet in bytes, not including 'mac' or the
-'packet_length' field itself.
+包的长度，单位bytes, 不包括'mac'和'packet_length'本身
 
 padding_length
 Length of 'random padding' (bytes).
 
 payload
-The useful contents of the packet.  If compression has been
-negotiated, this field is compressed.  Initially, compression
-MUST be "none".
+有效的数据，如果打开压缩，这个字段将被压缩。初始化时候，压缩默认"none"
 
 random padding
 Arbitrary-length padding, such that the total length of
 (packet_length || padding_length || payload || random padding)
 is a multiple of the cipher block size or 8, whichever is
-
-
-
-
-
-Ylonen &  Lonvick           Standards Track                     [Page 7]
-
-RFC 4253              SSH Transport Layer Protocol          January 2006
-
-
 larger.  There MUST be at least four bytes of padding.  The
 padding SHOULD consist of random bytes.  The maximum amount of
 padding is 255 bytes.
 
 mac
-Message Authentication Code.  If message authentication has
-been negotiated, this field contains the MAC bytes.  Initially,
-the MAC algorithm MUST be "none".
+MAC地址, 如果消息认证被打开，这个字段将包含MAC的数据,MAC地址初始化为"none"
+```
 
 Note that the length of the concatenation of 'packet_length',
 'padding_length', 'payload', and 'random padding' MUST be a multiple
